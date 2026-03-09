@@ -131,6 +131,21 @@ static const TickType_t         timeout_rtt_io_long_search_tt  = pdMS_TO_TICKS(1
     #define RTT_POLL_INT_MS     RTT_CONSOLE_POLL_INT_MS
 #endif
 
+#if !OPT_RTT_WHILE_DEBUGGING
+    #define dap_is_connected()     false
+#endif
+
+// ft = from target
+static EXT_SEGGER_RTT_BUFFER_UP *ft_extRttBuf;
+static uint8_t                  ft_buf[256];
+static uint32_t                 ft_cnt;
+static bool                     ft_ok;
+
+static uint32_t                 rtt_cb;
+static bool                     rtt_cb_found;                                  // just for message output
+
+
+//----------------------------------------------------------------------------------------------------------------------
 
 
 static void rtt_cb_timeout_null(TimerHandle_t xTimer)
@@ -186,6 +201,17 @@ static bool is_target_ok(uint32_t addr)
 
 
 
+static uint32_t rtt_cb_cnt;
+static uint32_t rtt_cb_cnt_max;
+typedef struct {
+    uint32_t addr;
+    uint32_t data_received;
+} EXT_RTT_CB_INFO;
+
+static EXT_RTT_CB_INFO rtt_cb_info[4];
+
+
+
 static bool search_for_rtt_cb(uint32_t *p_rtt_cb, const TickType_t timeout_tt)
 /**
  * Search for the RTT control block.
@@ -206,7 +232,13 @@ static bool search_for_rtt_cb(uint32_t *p_rtt_cb, const TickType_t timeout_tt)
 //    picoprobe_info("-----------search_for_rtt_cb(%08x)\n", (unsigned int)rtt_cb);
 
     // check parameter
-    if (rtt_cb < TARGET_RAM_START  ||  rtt_cb >= TARGET_RAM_END - sizeof(EXT_SEGGER_RTT_CB_HEADER)) {
+    if (rtt_cb < TARGET_RAM_START) {
+        rtt_cb_cnt = 0;
+        rtt_cb = TARGET_RAM_START;
+    }
+    else if (rtt_cb >= TARGET_RAM_END - sizeof(EXT_SEGGER_RTT_CB_HEADER)) {
+        rtt_cb_cnt_max = rtt_cb_cnt;
+        rtt_cb_cnt = 0;
         rtt_cb = TARGET_RAM_START;
     }
     else if (rtt_check_control_block_header(rtt_cb)) {
@@ -322,12 +354,6 @@ static unsigned rtt_get_write_space(SEGGER_RTT_BUFFER_DOWN *pRing)
 }   // rtt_get_write_space
 
 
-
-// ft = from target
-static EXT_SEGGER_RTT_BUFFER_UP *ft_extRttBuf;
-static uint8_t ft_buf[256];
-static uint32_t ft_cnt;
-static bool ft_ok;
 
 static void rtt_from_target_thread(void *p)
 /**
@@ -696,15 +722,6 @@ static void rtt_print_target_info(void)
 
 
 
-#if !OPT_RTT_WHILE_DEBUGGING
-    #define dap_is_connected()     false
-#endif
-
-static uint32_t rtt_cb;
-static bool     rtt_cb_ok;                    // TODO actually just for message output
-
-
-
 static void rtt_while_debugging(void)
 /**
  * Do RTT while debugging until a DAP command arrives
@@ -716,15 +733,15 @@ static void rtt_while_debugging(void)
 
         prev_rtt_cb = rtt_cb;
         if ( !search_for_rtt_cb( &rtt_cb, timeout_rtt_io_while_dap_tt)) {
-            if (rtt_cb_ok) {
-                rtt_cb_ok = false;
+            if (rtt_cb_found) {
+                rtt_cb_found = false;
                 picoprobe_info("---- no RTT_CB found (RTT during DAP)\n");
             }
             break;
         }
 
         if (rtt_cb != prev_rtt_cb) {
-            rtt_cb_ok = true;
+            rtt_cb_found = true;
             picoprobe_info("---- RTT_CB found at 0x%x (RTT during DAP)\n", (unsigned)rtt_cb);
         }
 
@@ -784,8 +801,8 @@ static void rtt_state_machine(void)
             if ( !search_for_rtt_cb( &rtt_cb, timeout_rtt_io_endless_tt))
             {
                 // -> no RTT_CB in memory
-                if (rtt_cb_ok) {
-                    rtt_cb_ok = false;
+                if (rtt_cb_found) {
+                    rtt_cb_found = false;
                     picoprobe_info("---- no RTT_CB found\n");
                 }
                 led_state(LS_TARGET_FOUND);
@@ -794,7 +811,7 @@ static void rtt_state_machine(void)
             {
                 // RTT_CB found
                 if (rtt_cb != prev_rtt_cb) {
-                    rtt_cb_ok = true;
+                    rtt_cb_found = true;
                     picoprobe_info("---- RTT_CB found at 0x%x\n", (unsigned)rtt_cb);
                 }
                 state_rtt_cb_detection = E_RTT_CB_FOUND;
@@ -894,9 +911,9 @@ void rtt_io_thread(void *ptr)
  */
 {
     for (;;) {
-//        printf("!!!!!!!!!!!!!!!!!!!!!! x %d %d 0x%08x\n", state_rtt_cb_detection, rtt_cb_ok, (unsigned)rtt_cb);
+//        printf("!!!!!!!!!!!!!!!!!!!!!! x %d %d 0x%08x\n", state_rtt_cb_detection, rtt_cb_found, (unsigned)rtt_cb);
         sw_lock(E_SWLOCK_RTT);
-//        printf("!!!!!!!!!!!!!!!!!!!!!! y %d %d 0x%08x\n", state_rtt_cb_detection, rtt_cb_ok, (unsigned)rtt_cb);
+//        printf("!!!!!!!!!!!!!!!!!!!!!! y %d %d 0x%08x\n", state_rtt_cb_detection, rtt_cb_found, (unsigned)rtt_cb);
         // post: we have the interface
 
         if ( !dap_is_connected()) {
