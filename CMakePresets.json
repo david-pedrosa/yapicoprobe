@@ -6,8 +6,6 @@
             "hidden": true,
             "generator": "Ninja",
             "cacheVariables": {
-                "PICO_SDK_PATH": "$penv{USERPROFILE}/.pico-sdk/sdk/2.2.0",
-                "PICO_TOOLCHAIN_PATH": "$penv{USERPROFILE}/.pico-sdk/toolchain/14_2_Rel1",
                 "PROJECT": "picoprobe",
                 "PICOPROBE_VERSION_MAJOR": "2",
                 "PICOPROBE_VERSION_MINOR": "2",
@@ -16,7 +14,53 @@
                 "CMAKE_MAKE_PROGRAM": "$penv{USERPROFILE}/.pico-sdk/ninja/v1.12.1/ninja"
             },
             "environment": {
-                "PATH": "$penv{USERPROFILE}/.pico-sdk/toolchain/14_2_Rel1/bin;$penv{USERPROFILE}/.pico-sdk/cmake/v3.31.5/bin;$penv{PATH}"
+                "PICO_SDK_PATH": "$penv{USERPROFILE}/.pico-sdk/sdk/2.2.0",
+                "PICO_TOOLCHAIN_PATH": "$penv{USERPROFILE}/.pico-sdk/toolchain/14_2_Rel1",
+                "PATH": "$penv{USERPROFILE}/.pico-sdk/toolchain/14_2_Rel1/bin;$penv{USERPROFILE}/.pico-sdk/picotool/2.2.0-a4/picotool;$penv{USERPROFILE}/.pico-sdk/cmake/v3.31.5/bin;$penv{USERPROFILE}/.pico-sdk/ninja/v1.12.1;$penv{PATH}"
+            }
+        },
+        {
+            "name": "pico",
+            "inherits": "default",
+            "displayName": "Pico",
+            "description": "Build for Raspberry Pi Pico (RP2040)",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "PICO_BOARD": "pico"
+            }
+        },
+        {
+            "name": "pico_w",
+            "inherits": "default",
+            "displayName": "Pico W",
+            "description": "Build for Raspberry Pi Pico W (RP2040 + WiFi)",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "PICO_BOARD": "pico_w"
+            }
+        },
+        {
+            "name": "pico_debug_probe",
+            "inherits": "default",
+            "displayName": "Pico Debug Probe",
+            "description": "Build for Raspberry Pi Pico Debug Probe",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "PICO_BOARD": "pico_debug_probe"
+            }
+        },
+        {
+            "name": "pico2",
+            "inherits": "default",
+            "displayName": "Pico2",
+            "description": "Build for Raspberry Pi Pico 2 (RP2350)",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "PICO_BOARD": "pico2"
             }
         },
         {
@@ -27,17 +71,6 @@
             "binaryDir": "${sourceDir}/_build/pico-debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "PICO_BOARD": "pico"
-            }
-        },
-        {
-            "name": "pico-release",
-            "inherits": "default",
-            "displayName": "Pico Release",
-            "description": "Release build for Raspberry Pi Pico (RP2040)",
-            "binaryDir": "${sourceDir}/_build/pico-release",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
                 "PICO_BOARD": "pico"
             }
         },
@@ -53,17 +86,6 @@
             }
         },
         {
-            "name": "pico_w-release",
-            "inherits": "default",
-            "displayName": "Pico W Release",
-            "description": "Release build for Raspberry Pi Pico W (RP2040 + WiFi)",
-            "binaryDir": "${sourceDir}/_build/pico_w-release",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "PICO_BOARD": "pico_w"
-            }
-        },
-        {
             "name": "pico_debug_probe-debug",
             "inherits": "default",
             "displayName": "Pico Debug Probe Debug",
@@ -71,17 +93,6 @@
             "binaryDir": "${sourceDir}/_build/pico_debug_probe-debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "PICO_BOARD": "pico_debug_probe"
-            }
-        },
-        {
-            "name": "pico_debug_probe-release",
-            "inherits": "default",
-            "displayName": "Pico Debug Probe Release",
-            "description": "Release build for Raspberry Pi Pico Debug Probe",
-            "binaryDir": "${sourceDir}/_build/pico_debug_probe-release",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
                 "PICO_BOARD": "pico_debug_probe"
             }
         },
@@ -95,51 +106,40 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "PICO_BOARD": "pico2"
             }
-        },
-        {
-            "name": "pico2-release",
-            "inherits": "default",
-            "displayName": "Pico2 Release",
-            "description": "Release build for Raspberry Pi Pico 2 (RP2350)",
-            "binaryDir": "${sourceDir}/_build/pico2-release",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "PICO_BOARD": "pico2"
-            }
         }
     ],
     "buildPresets": [
         {
-            "name": "pico-debug-build",
-            "configurePreset": "pico-debug"
+            "name": "pico-build",
+            "configurePreset": "pico"
         },
         {
-            "name": "pico-release-build",
-            "configurePreset": "pico-release"
+            "name": "pico_w-build",
+            "configurePreset": "pico_w"
+        },
+        {
+            "name": "pico_debug_probe-build",
+            "configurePreset": "pico_debug_probe"
+        },
+        {
+            "name": "pico2-build",
+            "configurePreset": "pico2"
+        },
+        {
+            "name": "pico-debug-build",
+            "configurePreset": "pico-debug"
         },
         {
             "name": "pico_w-debug-build",
             "configurePreset": "pico_w-debug"
         },
         {
-            "name": "pico_w-release-build",
-            "configurePreset": "pico_w-release"
-        },
-        {
             "name": "pico_debug_probe-debug-build",
             "configurePreset": "pico_debug_probe-debug"
         },
         {
-            "name": "pico_debug_probe-release-build",
-            "configurePreset": "pico_debug_probe-release"
-        },
-        {
             "name": "pico2-debug-build",
             "configurePreset": "pico2-debug"
-        },
-        {
-            "name": "pico2-release-build",
-            "configurePreset": "pico2-release"
         }
     ]
 }
